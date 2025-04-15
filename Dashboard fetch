@@ -1,1 +1,49 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <title>Tramtijden Dashboard</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h2 { margin-bottom: 15px; }
+        ul { padding-left: 15px; }
+        li { margin-bottom: 5px; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <h2>🚋 Actuele tram vertrektijden</h2>
+    <ul id="tram-tijden">Laden...</ul>
+
+    <script>
+        async function haalTramTijdenOp() {
+            const halteCode = '31001410'; // Vervang dit met je eigen haltecode (zie stap 4)
+            const url = `https://v0.ovapi.nl/tpc/${halteCode}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const ul = document.getElementById('tram-tijden');
+                ul.innerHTML = '';
+
+                const vertrekken = Object.values(data[halteCode].Passes)
+                    .sort((a,b) => new Date(a.ExpectedDepartureTime) - new Date(b.ExpectedDepartureTime))
+                    .slice(0, 5); // toont volgende 5 vertrekken
+
+                vertrekken.forEach(pass => {
+                    const tijd = new Date(pass.ExpectedDepartureTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const li = document.createElement('li');
+                    li.textContent = `Tram ${pass.LinePublicNumber} → ${pass.DestinationName50} (${tijd})`;
+                    ul.appendChild(li);
+                });
+            } catch (error) {
+                document.getElementById('tram-tijden').textContent = 'Fout bij ophalen data!';
+                console.error('Fout:', error);
+            }
+        }
+
+        haalTramTijdenOp();
+        setInterval(haalTramTijdenOp, 60000); // elke minuut verversen
+    </script>
+</body>
+</html>
 
